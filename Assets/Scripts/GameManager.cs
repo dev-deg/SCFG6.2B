@@ -7,12 +7,17 @@ using UnityEngine.UI;
 public class GameManager : MonoBehaviour
 {
     private Image _pauseScreen;
-    private bool _isPausable = true;
-
-    public delegate void PauseDelegate(bool isPaused);
+    
+    //The method signature of how the event listeners/subscibers need to have
+    public delegate void PauseDelegate();
+    
+    //The event that is triggered when the p button is pressed
     public event PauseDelegate Pause_State_Changed;
     
-    private bool _isPaused = false;
+    //The variable storing the pause state (True / False)
+    private bool _isPaused;
+    
+    //The getter and setter in one place
     public bool Paused
     {
         get => _isPaused;
@@ -23,9 +28,9 @@ public class GameManager : MonoBehaviour
                 //Updated isPaused variable
                 _isPaused = value;
                 //Game Pause
-                Time.timeScale = _isPaused ? 0 : 1;
+                Time.timeScale = value ? 0 : 1;
                 //Triggering the event
-                Pause_State_Changed?.Invoke(value);
+                Pause_State_Changed?.Invoke();
             }
             
         }
@@ -35,50 +40,32 @@ public class GameManager : MonoBehaviour
     {
         _pauseScreen = GameObject.Find("Canvas").GetComponent<Image>();
         
+        //Subscribing
         //Adding the method PauseListener to listen to Pause_State_Changed
         Pause_State_Changed += PauseListener;
     }
     private void OnDestroy()
     {
+        //Unsubscribing
         //Removing the method PauseListener to stop listening to Pause_State_Changed
         Pause_State_Changed -= PauseListener;
     }
-
-    // Update is called once per frame
+    
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.P) && _isPausable)
+        if (Input.GetKeyDown(KeyCode.P))
         {
-            //prevent additional pauses for a certain period of time
-            _isPausable = false;
-            //start a timer to re-enable isPausable after 0.5s
-            StartCoroutine(ReEnablePause(0.5f));
-            
-            //change pause state
+            //Change pause state
             Paused = !Paused;
-            if (Paused)
-            {
-                //display canvas
-                _pauseScreen.enabled = true;
-            }
-            else
-            {
-                //hide canvas
-                _pauseScreen.enabled = false;
-            }
+            //Update the UI
+            _pauseScreen.enabled = Paused;
         }  
     }
 
-
-
-    private void PauseListener(bool isPaused)
+    //The listener/subscibed method, listening to the event
+    private void PauseListener()
     {
-        Debug.Log("Pause State Changed!");
+        Debug.Log(Paused ? "Game is currently Paused" : "Game is currently active");
     }
     
-    IEnumerator ReEnablePause(float duration)
-    {
-        yield return new WaitForSeconds(duration);
-        _isPausable = true;
-    }
 }
